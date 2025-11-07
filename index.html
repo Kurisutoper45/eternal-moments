@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Eternal Moments — Chris × Ita (Gallery V2)</title>
+<meta name="description" content="Setiap momen kecil kita, tetap abadi di waktu.">
+<style>
+  :root{--bg:#0b0b0b;--fg:#e5e7eb;--muted:#a3a3a3;--card:#101114;--border:#23252a;--accent:#fef3c7;--gold:#eab308}
+  *{box-sizing:border-box} html,body{height:100%} body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter}
+  a{color:inherit;text-decoration:none}
+  .container{max-width:1080px;margin:0 auto;padding:0 16px}
+  header{position:sticky;top:0;border-bottom:1px solid var(--border);backdrop-filter:blur(8px);background:rgba(11,11,11,.6)}
+  .nav{height:56px;display:flex;align-items:center;justify-content:space-between}
+  .btn{padding:8px 14px;border:1px solid var(--border);border-radius:12px;background:transparent;color:var(--fg)}
+  .btn:hover{opacity:.9}
+  .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;font-size:14px}
+  .section{padding:72px 0}
+  .title{font-weight:900;font-size:44px;letter-spacing:-.02em}
+  .subtitle{color:var(--accent);opacity:.95}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
+  .grid{display:grid;gap:16px}
+  .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .center{text-align:center}
+  .hero{position:relative;overflow:hidden}
+  .hero-inner{position:relative;padding:48px 0}
+  .hero-wrap{display:grid;grid-template-columns:1.2fr .8fr;gap:24px;align-items:center}
+  .hero img{width:100%;border-radius:18px;border:1px solid var(--border);object-fit:cover;max-height:460px}
+  .gallery img{width:100%;height:220px;object-fit:cover;border-radius:12px;border:1px solid var(--border);display:block}
+  .video figure, .gallery figure{margin:0}
+  .muted{color:var(--muted)}
+  .footer{border-top:1px solid var(--border)}
+  @media (max-width:820px){.grid-2{grid-template-columns:1fr}.grid-3{grid-template-columns:1fr}.title{font-size:32px}.hero-wrap{grid-template-columns:1fr}.gallery img{height:180px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="container nav">
+    <a href="#" style="font-weight:800">✨ Eternal Moments</a>
+    <nav style="display:flex;gap:10px;font-size:14px">
+      <a href="#story">Timeline</a>
+      <a href="#gallery">Galeri</a>
+      <a href="#videos">Video</a>
+      <a href="#friends">Saran Teman</a>
+    </nav>
+    <button class="btn" id="musicBtn" aria-label="Play/Pause music">🎵</button>
+  </div>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-wrap">
+        <div>
+          <h1 class="title">Eternal Moments — Chris × Ita</h1>
+          <p class="subtitle">“Setiap momen kecil kita, tetap abadi di waktu.”</p>
+          <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+            <span class="pill" id="since"></span>
+            <span class="pill" id="days"></span>
+            <span class="pill" id="anniv"></span>
+          </div>
+          <div style="margin-top:18px"><a href="#videos" class="btn">Tonton Day 1</a></div>
+        </div>
+        <img src="assets/photos/cover.jpg" alt="Cover Chris × Ita">
+      </div>
+    </div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section id="story" class="section">
+    <div class="container">
+      <h2>Our Story</h2>
+      <div class="grid" id="timelineList"></div>
+    </div>
+  </section>
+
+  <!-- GALLERY -->
+  <section id="gallery" class="section">
+    <div class="container">
+      <h2>Memory Frames</h2>
+      <div class="grid grid-3 gallery" id="galleryGrid"></div>
+    </div>
+  </section>
+
+  <!-- VIDEOS -->
+  <section id="videos" class="section">
+    <div class="container">
+      <h2>Video Memories</h2>
+      <div class="grid grid-2 video" id="videoGrid"></div>
+    </div>
+  </section>
+
+  <!-- FRIENDS' ADVICE -->
+  <section id="friends" class="section">
+    <div class="container">
+      <h2>Words from Our Friends</h2>
+      <div class="grid grid-3">
+        <form class="card" id="advForm">
+          <h4 style="margin:0 0 8px 0">💬 Titip saran atau doa</h4>
+          <input id="advName" placeholder="Nama" class="btn" style="width:100%;margin-top:8px">
+          <textarea id="advText" placeholder="Saran terbaikmu..." class="btn" style="width:100%;height:96px;margin-top:8px"></textarea>
+          <button class="btn" style="width:100%;margin-top:8px">Kirim</button>
+        </form>
+        <div class="grid" id="advList" style="grid-column:span 2"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="section footer">
+    <div class="container muted">Dibuat dengan ❤️ oleh Chris untuk Ita. © <span id="year"></span></div>
+  </footer>
+</main>
+
+<!-- AUDIO -->
+<audio id="bgm" src="assets/music/bg-melody.mp3" loop></audio>
+
+<script>
+// ====== DATA ======
+const COUPLE = {
+  you: { name: "Chris", birthday: "2000-12-02" },
+  partner: { name: "Ita", birthday: "2001-04-16" },
+  officialDate: "2025-07-23",
+  tagline: "Two souls, one timeline."
+};
+
+const TIMELINE = [
+  { date: "2025-07-23", title: "Hari Pertama Jadian", desc: "Day 1 dimulai. Lihat videonya di bawah." },
+  { date: "2025-07-23", title: "Foto & Video Bareng Pertama", desc: "Selfie blur, senyum jujur. Dokumentasi resmi dimulai." },
+  { date: "2025-09-14", title: "Mini Trip", desc: "Tersesat bareng itu masih maju bareng." },
+  { date: "2025-11-06", title: "Bikin Website Ini", desc: "Cinta, tapi responsive dan offline-ready." }
+];
+
+// Galeri default (placeholder). Ganti nama file dengan foto asli kalian di assets/photos/
+const GALLERY = [
+  { src: "assets/photos/cover.jpg", caption: "Cover — kopi date & soft smiles" },
+  { src: "assets/photos/photo1.jpg", caption: "Momen 1" },
+  { src: "assets/photos/photo2.jpg", caption: "Momen 2" },
+  { src: "assets/photos/photo3.jpg", caption: "Momen 3" },
+  { src: "assets/photos/photo4.jpg", caption: "Momen 4" },
+  { src: "assets/photos/photo5.jpg", caption: "Momen 5" },
+  { src: "assets/photos/photo6.jpg", caption: "Momen 6" }
+];
+
+// Video: termasuk Day 1 yang kamu upload
+const VIDEOS = [
+  { src: "assets/videos/day1.mp4", poster: "assets/photos/cover.jpg", caption: "Day 1 — Kita mulai pacaran" },
+  { src: "assets/videos/moment-1.mp4", poster: "assets/photos/cover.jpg", caption: "Video pertama bareng (lainnya)" }
+];
+
+// ====== HELPERS ======
+const fmtDate = iso => new Date(iso + "T00:00:00");
+const daysBetween = (a,b) => Math.floor(Math.abs(b-a)/(1000*60*60*24));
+function nextAnniversary(startISO){
+  const start = fmtDate(startISO), now = new Date();
+  let next = new Date(now.getFullYear(), start.getMonth(), start.getDate());
+  if(next < now) next = new Date(now.getFullYear()+1, start.getMonth(), start.getDate());
+  const remaining = daysBetween(now, next);
+  const years = next.getFullYear() - start.getFullYear();
+  return { remaining, label: years + " tahun" };
+}
+
+// ====== HERO COUNTS ======
+document.getElementById("since").textContent = "📅 Sejak " + new Date(COUPLE.officialDate).toLocaleDateString("id-ID",{day:"2-digit",month:"long",year:"numeric"});
+document.getElementById("days").textContent = "⏱️ " + daysBetween(fmtDate(COUPLE.officialDate), new Date()) + " hari bersama";
+const a = nextAnniversary(COUPLE.officialDate);
+document.getElementById("anniv").textContent = "🎁 Menuju " + a.label + ": " + a.remaining + " hari lagi";
+document.getElementById("year").textContent = new Date().getFullYear();
+
+// ====== TIMELINE RENDER ======
+const tl = document.getElementById("timelineList");
+TIMELINE.forEach((item,i)=>{
+  const div = document.createElement("div");
+  div.className = "card";
+  div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+    <div><p class="muted" style="font-size:14px">${new Date(item.date).toLocaleDateString("id-ID",{day:"2-digit",month:"long",year:"numeric"})}</p>
+    <h3 style="margin:6px 0 0 0">${item.title}</h3></div>
+    <span class="pill">✨ ${i+1}</span>
+  </div>
+  <p class="muted" style="margin-top:8px">${item.desc}</p>`;
+  tl.appendChild(div);
+});
+
+// ====== GALLERY RENDER ======
+const gg = document.getElementById("galleryGrid");
+GALLERY.forEach(g=>{
+  const fig = document.createElement("figure");
+  fig.className="card";
+  fig.innerHTML = `<img src="${g.src}" alt="" loading="lazy" onerror="this.style.opacity=.3;this.alt='(foto)';"><figcaption class="muted" style="margin-top:8px;font-size:14px">${g.caption||""}</figcaption>`;
+  gg.appendChild(fig);
+});
+
+// ====== VIDEO RENDER ======
+const vg = document.getElementById("videoGrid");
+VIDEOS.forEach(v=>{
+  const fig = document.createElement("figure");
+  fig.className="card";
+  fig.innerHTML = `<video controls preload="metadata" poster="${v.poster||''}" style="width:100%;border-radius:12px">
+    <source src="${v.src}" type="video/mp4">Browser kamu tidak mendukung video.
+  </video><figcaption class="muted" style="margin-top:8px;font-size:14px">${v.caption||""}</figcaption>`;
+  vg.appendChild(fig);
+});
+
+// ====== FRIENDS' ADVICE ======
+const advKey = "em_advices";
+let advices = [];
+try { advices = JSON.parse(localStorage.getItem(advKey) || "[]"); } catch(e){ advices=[]; }
+function renderAdv(){ 
+  const list = document.getElementById("advList"); list.innerHTML="";
+  if(advices.length===0){ const p=document.createElement("p"); p.className="muted"; p.textContent="Belum ada saran. Jadi yang pertama, dong."; list.appendChild(p); return; }
+  advices.forEach(a=>{
+    const c = document.createElement("div"); c.className="card";
+    c.innerHTML = `<div style='display:flex;justify-content:space-between;align-items:center'><strong>${a.name}</strong><span class='muted' style='font-size:12px'>${new Date(a.at).toLocaleString("id-ID")}</span></div>
+    <p style='margin:6px 0 0 0'>${a.text}</p>`;
+    list.appendChild(c);
+  });
+}
+renderAdv();
+document.getElementById("advForm").addEventListener("submit",(e)=>{
+  e.preventDefault();
+  const n = document.getElementById("advName").value.trim();
+  const t = document.getElementById("advText").value.trim();
+  if(!n||!t) return;
+  advices = [{name:n,text:t,at:new Date().toISOString()}, ...advices];
+  localStorage.setItem(advKey, JSON.stringify(advices));
+  renderAdv();
+  e.target.reset();
+});
+
+
+// ====== AUDIO SMART AUTOPLAY ======
+// Taktik: coba play dalam keadaan muted (diizinkan semua browser).
+// Lalu unmute + fade-in pada interaksi pertama.
+const audio = document.getElementById("bgm");
+const musicBtn = document.getElementById("musicBtn");
+let playing=false, unlocked=false;
+
+function tryAutoMuted(){
+  audio.muted = true;
+  audio.volume = 0;
+  audio.play().then(()=>{
+    playing = true;
+    musicBtn.textContent = "⏸";
+  }).catch(()=>{
+    // ignore
+  });
+}
+
+function unlockAndFade(){
+  if(unlocked) return;
+  unlocked = true;
+  // Unmute dan naikkan volume pelan
+  audio.muted = false;
+  const target = 0.8;
+  const step  = 0.05;
+  const tick  = setInterval(()=>{
+    audio.volume = Math.min(target, (audio.volume || 0) + step);
+    if(audio.volume >= target) clearInterval(tick);
+  }, 80);
+}
+
+window.addEventListener("load", tryAutoMuted);
+
+// Listener interaksi pertama untuk unmute
+["click","touchstart","pointerdown","keydown","scroll"].forEach(evt=>{
+  document.addEventListener(evt, unlockAndFade, { once:true, passive:true });
+});
+
+// Tombol manual
+musicBtn.addEventListener("click", ()=>{
+  if(!playing){
+    audio.muted=false;
+    audio.volume = 0.8;
+    audio.play().then(()=>{ playing=true; musicBtn.textContent="⏸"; }).catch(()=>{});
+  } else {
+    audio.pause(); playing=false; musicBtn.textContent="🎵";
+  }
+});
+
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden && playing){ audio.pause(); playing=false; musicBtn.textContent="🎵"; unlocked=false; }
+});
+</script>
+</body>
+</html>
