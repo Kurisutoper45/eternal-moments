@@ -7,20 +7,20 @@
 <meta name="description" content="Setiap momen kecil kita, tetap abadi di waktu.">
 <style>
 :root{
-  --bg:#fff8f3;         /* warm peach */
-  --fg:#1f2937;         /* slate-800 */
-  --muted:#6b7280;      /* slate-500 */
-  --card:#ffffff;       /* white card */
-  --border:#f1e5da;     /* soft border */
-  --accent:#e86a7c;     /* romantic rose */
-  --accent-2:#ffdcb2;   /* soft peach */
+  --bg:#fff8f3;
+  --fg:#1f2937;
+  --muted:#6b7280;
+  --card:#ffffff;
+  --border:#f1e5da;
+  --accent:#e86a7c;
+  --accent-2:#ffdcb2;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Inter}
 .container{max-width:1080px;margin:0 auto;padding:0 16px}
 header{position:sticky;top:0;border-bottom:1px solid var(--border);backdrop-filter:blur(8px);
-  background:rgba(255,248,243,.8)}
+  background:rgba(255,248,243,.85)}
 .nav{height:64px;display:flex;align-items:center;justify-content:space-between}
 .btn{padding:10px 14px;border:1px solid var(--border);border-radius:999px;background:#fff;color:var(--fg);box-shadow:0 1px 0 rgba(0,0,0,.04)}
 .btn:hover{transform:translateY(-1px)}
@@ -59,9 +59,6 @@ header{position:sticky;top:0;border-bottom:1px solid var(--border);backdrop-filt
   .gallery img{height:180px}
 }
 
-
-
-
 .music-cta{isolation:isolate}
 .music-cta .wave{position:absolute; inset:-6px; border:2px solid var(--accent); border-radius:999px; opacity:0; transform:scale(.85);}
 .music-cta.playing .wave{animation:ripple 1.8s ease-out infinite}
@@ -92,16 +89,16 @@ header{position:sticky;top:0;border-bottom:1px solid var(--border);backdrop-filt
   <section class="hero">
     <div class="container" style="display:grid;grid-template-columns:1.2fr .8fr;gap:20px;align-items:center;padding:40px 0">
       <div>
-        <span class="badge">💗 Tap di mana saja atau klik di bawah ini untuk mendengarkan kisah kami</span>
+        <span class="badge">💗 Tap di mana saja atau klik tombol di bawah ini untuk mendengarkan kisah kami</span>
         <h1 class="title">Eternal Moments — Chris × Ita</h1>
         <p class="subtitle">“Setiap momen kecil kita, tetap abadi di waktu.”</p>
         <div style="margin-top:18px"><a href="#gallery" class="btn">Lihat galeri</a></div>
       <div style="margin-top:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
         <button id="musicCTA" class="btn music-cta" style="background:var(--accent); color:white; font-weight:700; position:relative; overflow:visible">🎶 Dengarkan kisah kami<span class="wave w1"></span><span class="wave w2"></span><span class="wave w3"></span></button>
         <span id="noteCloud" style="position:relative; height:0">
-          <span class="note show" style="position:absolute;left:0;opacity:0">🎶</span>
-          <span class="note show" style="position:absolute;left:14px;opacity:0;animation-delay:.25s">🎵</span>
-          <span class="note show" style="position:absolute;left:28px;opacity:0;animation-delay:.5s">🎶</span>
+          <span class="note n1" style="position:absolute;left:0;opacity:0">🎶</span>
+          <span class="note n2" style="position:absolute;left:14px;opacity:0;animation-delay:.25s">🎵</span>
+          <span class="note n3" style="position:absolute;left:28px;opacity:0;animation-delay:.5s">🎶</span>
         </span>
       </div>
 
@@ -236,162 +233,91 @@ document.getElementById("advForm").addEventListener("submit",(e)=>{
   e.target.reset();
 });
 
-// AUDIO SMART AUTOPLAY + NOTE FLOATING
-const audio = document.getElementById("bgm");
-const musicBtn = document.getElementById("musicBtn");
-const notesEls = document.querySelectorAll('.note-cloud .note');
-let playing=false, unlocked=false;
 
-function setNotes(show){
-  notesEls.forEach(el=>{
-    el.style.opacity = show ? '1' : '0';
-    if(show){ el.classList.add('show'); } else { el.classList.remove('show'); }
-  });
-}
+/* AUDIO LOGIC: robust autop
+# small, focused functions to ensure play on mobile
+*/
+const audio = document.getElementById('bgm');
+const musicCTA = document.getElementById('musicCTA');
+const noteCloud = document.getElementById('noteCloud');
+const tapHint = document.getElementById('tapHint');
+let isPlaying = false;
+let unlocked = false;
 
-function tryAutoMuted(){
-  if(!audio) return;
-  audio.muted = true; audio.volume = 0;
-  audio.play().catch(()=>{});
+function showNotes(on){
+  if(!noteCloud) return;
+  noteCloud.style.opacity = on ? '1' : '0';
 }
+function hideTapHint(){ if(tapHint){ tapHint.style.opacity=0; setTimeout(()=>tapHint && tapHint.remove(),600);} }
+
+// try silent autoplay (muted) to warm up the browser
+window.addEventListener('load', ()=>{
+  try{ audio.muted = true; audio.volume = 0; audio.play().catch(()=>{}); }catch(e){}
+});
+
+// unlock on first user interaction anywhere
 function unlockAndFade(){
   if(unlocked) return; unlocked = true;
-  audio.muted = false; const target = 0.8; const step = 0.06;
-  const tick = setInterval(()=>{
-    audio.volume = Math.min(target, (audio.volume||0) + step);
-    if(audio.volume >= target) clearInterval(tick);
-  }, 80);
+  try{
+    audio.muted = false;
+    let v = audio.volume || 0;
+    const target = 0.8;
+    const step = 0.06;
+    const id = setInterval(()=>{
+      v = Math.min(target, v + step);
+      audio.volume = v;
+      if(v >= target) clearInterval(id);
+    }, 80);
+    audio.play().catch(()=>{});
+  }catch(e){}
+  hideTapHint();
+  document.removeEventListener('click', unlockAndFade, true);
+  document.removeEventListener('touchstart', unlockAndFade, true);
 }
-window.addEventListener("load", tryAutoMuted);
-["click","touchstart","pointerdown","keydown","scroll"].forEach(evt=>{
-  document.addEventListener(evt, unlockAndFade, { once:true, passive:true });
-});
 
-// Tap-hint hide after play or first interaction
-(function(){
-  const tapHint = document.getElementById('tapHint');
-  const hideHint = () => { if(!tapHint) return; tapHint.style.transition='opacity .6s'; tapHint.style.opacity='0'; setTimeout(()=>tapHint && tapHint.remove(), 650); };
-  if (audio) audio.addEventListener('playing', hideHint, { once:true });
-  ["click","touchstart","pointerdown","keydown","scroll"].forEach(evt=>document.addEventListener(evt, hideHint, { once:true, passive:true, capture:true }));
-})();
+document.addEventListener('click', unlockAndFade, {capture:true, passive:true});
+document.addEventListener('touchstart', unlockAndFade, {capture:true, passive:true});
 
-// manual toggle button + animated notes
-musicBtn.addEventListener("click", ()=>{
-  if(!playing){
-    audio.muted=false; audio.volume=0.8;
-    audio.play().then(()=>{ playing=true; musicBtn.textContent="⏸"; setNotes(true); }).catch(()=>{});
-  } else {
-    audio.pause(); playing=false; musicBtn.textContent="🎵"; setNotes(false);
-  }
-});
-audio.addEventListener('playing', ()=>{ playing=true; musicBtn.textContent="⏸"; setNotes(true); });
-audio.addEventListener('pause',   ()=>{ playing=false; musicBtn.textContent="🎵"; setNotes(false); });
-
-document.addEventListener("visibilitychange",()=>{
-  if(document.hidden && playing){ audio.pause(); playing=false; musicBtn.textContent="🎵"; setNotes(false); unlocked=false; }
-});
-
-// HERO MUSIC CTA BUTTON
-(function(){
-  const musicCTA = document.getElementById('musicCTA');
-  const noteCloud = document.getElementById('noteCloud');
-  const makeNotes = (on)=>{
-    if(!noteCloud) return;
-    noteCloud.style.opacity = on ? '1' : '0';
-  };
-  if (musicCTA){
-    musicCTA.addEventListener('click', ()=>{
-      if(!playing){
-        audio.muted=false; audio.volume=0.8;
-        audio.play().then(()=>{ playing=true; musicCTA.textContent='⏸ Jeda musik'; makeNotes(true); }).catch(()=>{});
-      } else {
-        audio.pause(); playing=false; musicCTA.textContent='🎶 Dengarkan kisah kami'; makeNotes(false);
-      }
-    });
-  }
-  audio.addEventListener('playing', ()=>{ if(musicCTA){ musicCTA.textContent='⏸ Jeda musik'; makeNotes(true);} });
-  audio.addEventListener('pause',   ()=>{ if(musicCTA){ musicCTA.textContent='🎶 Dengarkan kisah kami'; makeNotes(false);} });
-})();
-
-
-// Reveal on scroll for Our Story
-(function(){
-  const els = document.querySelectorAll('.reveal');
-  if (!('IntersectionObserver' in window)){ els.forEach(el=>el.classList.add('show')); return; }
-  const io = new IntersectionObserver((entries)=>{
-    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('show'); io.unobserve(e.target); } });
-  }, { threshold: 0.12 });
-  els.forEach(el=>io.observe(el));
-})();
-
-
-// Toggle ripple waves on CTA when music is playing
-(function(){
-  const cta = document.getElementById('musicCTA');
-  if(!cta) return;
-  const on = ()=> cta.classList.add('playing');
-  const off = ()=> cta.classList.remove('playing');
-  if (typeof audio !== 'undefined' && audio){
-    audio.addEventListener('playing', on);
-    audio.addEventListener('pause', off);
-    document.addEventListener('visibilitychange', ()=>{ if(document.hidden) off(); });
-  }
-})();
-
-
-// ====== AUDIO ROBUST MODE ======
-(function(){
-  const audio = window.audio || document.getElementById('bgm');
-  const cta = document.getElementById('musicCTA');
-  if(!audio) return;
-
-  // pre-load
-  audio.load();
-
-  // try autoplay muted first
-  document.addEventListener('DOMContentLoaded', ()=>{
-    try{ audio.muted = true; audio.volume = 0; audio.play().catch(()=>{}); }catch(e){}
-  });
-
-  // first interaction anywhere -> unmute + fade in
-  const unlock = ()=>{
-    try{
+// CTA button toggle
+if(musicCTA){
+  musicCTA.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    if(audio.paused){
       audio.muted = false;
-      let v = audio.volume || 0;
-      const target = 0.8, step = 0.08;
-      const id = setInterval(()=>{
-        v = Math.min(target, v + step);
-        audio.volume = v;
-        if(v >= target){ clearInterval(id); }
-      }, 80);
-      audio.play().catch(()=>{});
-    }catch(e){}
-    window.removeEventListener('click', unlock, true);
-    window.removeEventListener('touchstart', unlock, true);
-  };
-  window.addEventListener('click', unlock, true);
-  window.addEventListener('touchstart', unlock, true);
+      audio.volume = 0.8;
+      audio.play().then(()=>{
+        isPlaying = true;
+        musicCTA.textContent = '⏸ Jeda musik';
+        musicCTA.classList.add('playing');
+        showNotes(true);
+      }).catch(()=>{});
+    } else {
+      audio.pause();
+      isPlaying = false;
+      musicCTA.textContent = '🎶 Dengarkan kisah kami';
+      musicCTA.classList.remove('playing');
+      showNotes(false);
+    }
+  });
+}
 
-  // button control
-  if (cta){
-    cta.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      if(audio.paused){
-        audio.muted=false; audio.volume=0.8;
-        audio.play().catch(()=>{});
-      }else{
-        audio.pause();
-      }
-    });
-    // visual state
-    const on = ()=> cta.classList.add('playing');
-    const off = ()=> cta.classList.remove('playing');
-    audio.addEventListener('playing', on);
-    audio.addEventListener('pause', off);
-    document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ off(); } });
-  }
+// sync UI with audio state
+audio.addEventListener('playing', ()=>{ isPlaying=true; musicCTA && (musicCTA.textContent='⏸ Jeda musik', musicCTA.classList.add('playing')); showNotes(true); hideTapHint(); });
+audio.addEventListener('pause', ()=>{ isPlaying=false; musicCTA && (musicCTA.textContent='🎶 Dengarkan kisah kami', musicCTA.classList.remove('playing')); showNotes(false); });
+
+// safety: pause when tab hidden
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden && isPlaying){ audio.pause(); } });
+
+// Render note cloud small animation toggles
+(function(){
+  const notes = document.querySelectorAll('.note');
+  notes.forEach(n=>{ n.style.opacity=0; });
 })();
 
+// render gallery & videos already done above; remove tapHint on first interaction too
+['click','touchstart','keydown','scroll'].forEach(evt=> document.addEventListener(evt, ()=>{ hideTapHint(); }, { once:true, passive:true }));
+
+document.getElementById('year').textContent = new Date().getFullYear();
 </script>
 </body>
 </html>
