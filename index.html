@@ -59,8 +59,7 @@ header{position:sticky;top:0;border-bottom:1px solid var(--border);backdrop-filt
   .gallery img{height:180px}
 }
 
-.reveal{opacity:0; transform: translateY(12px); transition: opacity .6s ease, transform .6s ease}
-.reveal.show{opacity:1; transform:none}
+
 
 
 .music-cta{isolation:isolate}
@@ -115,7 +114,7 @@ header{position:sticky;top:0;border-bottom:1px solid var(--border);backdrop-filt
   <section id="story" class="section">
     <div class="container">
       <h2 style="margin:0 0 14px 0">Our Story — Chris & Ita</h2>
-      <article class="card reveal" style="max-width:860px; line-height:1.7; font-size:16.5px">
+      <article class="card" style="max-width:860px; line-height:1.7; font-size:16.5px">
         <p>Kadang semesta punya cara yang aneh tapi indah buat mempertemukan dua orang.
         Nggak direncanain, nggak disengaja, cuma kebetulan yang ternyata berarti besar.
         Begitulah awal cerita kita — dua orang yang awalnya dikenalkan oleh teman, tanpa tahu kalau pertemuan sederhana itu bakal berubah jadi sesuatu yang istimewa.</p>
@@ -336,6 +335,60 @@ document.addEventListener("visibilitychange",()=>{
     audio.addEventListener('playing', on);
     audio.addEventListener('pause', off);
     document.addEventListener('visibilitychange', ()=>{ if(document.hidden) off(); });
+  }
+})();
+
+
+// ====== AUDIO ROBUST MODE ======
+(function(){
+  const audio = window.audio || document.getElementById('bgm');
+  const cta = document.getElementById('musicCTA');
+  if(!audio) return;
+
+  // pre-load
+  audio.load();
+
+  // try autoplay muted first
+  document.addEventListener('DOMContentLoaded', ()=>{
+    try{ audio.muted = true; audio.volume = 0; audio.play().catch(()=>{}); }catch(e){}
+  });
+
+  // first interaction anywhere -> unmute + fade in
+  const unlock = ()=>{
+    try{
+      audio.muted = false;
+      let v = audio.volume || 0;
+      const target = 0.8, step = 0.08;
+      const id = setInterval(()=>{
+        v = Math.min(target, v + step);
+        audio.volume = v;
+        if(v >= target){ clearInterval(id); }
+      }, 80);
+      audio.play().catch(()=>{});
+    }catch(e){}
+    window.removeEventListener('click', unlock, true);
+    window.removeEventListener('touchstart', unlock, true);
+  };
+  window.addEventListener('click', unlock, true);
+  window.addEventListener('touchstart', unlock, true);
+
+  // button control
+  if (cta){
+    cta.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(audio.paused){
+        audio.muted=false; audio.volume=0.8;
+        audio.play().catch(()=>{});
+      }else{
+        audio.pause();
+      }
+    });
+    // visual state
+    const on = ()=> cta.classList.add('playing');
+    const off = ()=> cta.classList.remove('playing');
+    audio.addEventListener('playing', on);
+    audio.addEventListener('pause', off);
+    document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ off(); } });
   }
 })();
 
